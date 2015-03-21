@@ -193,7 +193,8 @@ def task_cmd(workdir, rootfs, path, args=[], copy=True, **kwargs):
             shutil.copyfileobj(src, dst)
         os.chmod(chroot_path, 0o755)
         path = chroot_path[len(rootfs):]
-    subprocess.call(['chroot', rootfs, path] + args)
+    if subprocess.call(['chroot', rootfs, path] + args) != 0:
+        abort('failed cmd execution')
     if chroot_path:
         os.unlink(chroot_path)
 
