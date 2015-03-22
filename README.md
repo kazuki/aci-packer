@@ -10,6 +10,7 @@ aci-packer
 * Ansible
 * シェルスクリプト
 * バイナリ・共有オブジェクトの依存関係の抽出
+* Pythonの最低限の環境作成
 
 
 This is a command-line tool to build ACI based on
@@ -20,6 +21,7 @@ This CLI support to create ACI using the following methods.
 * Ansible
 * Shell script
 * Extract dependencies from binary and shared object
+* Create minimum Python environment
 
 使い方 / Usage
 --------------
@@ -79,6 +81,19 @@ manifestファイルに"-aci-packer-build-steps-"というキーを追加して�
       "keeps": [                # バイナリ以外で保持しておくファイル・フォルダの一覧を記述(オプション)
         "<keep directory path>",
         "<keep file path>", ...
+      ]
+    },
+    {
+      "type": "create_python_env", # pythonの環境を作ります．
+                                   # 一番最初のstepであるひつようがあります
+      "python_exe": "<python exe path>" # virtualenvの-pオプションと同じ意味です
+    },
+    {
+      "type": "copy_host_files", # ホストのファイルをコピー
+      "binaries": [], # コピーするバイナリのリスト
+                      # lddを使って依存関係もコピーします
+      "files": [      # ホストのファイルをACIの指定パスにコピー
+        ['host path', 'aci path']
       ]
     }
   ]
