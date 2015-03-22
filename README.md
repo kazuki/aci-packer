@@ -11,18 +11,7 @@
 * バイナリ・共有オブジェクトの依存関係の抽出
 * Pythonの最低限の環境作成
 
-
-This is a command-line tool to build ACI based on
-[App Container Specification](https://github.com/appc/spec).
-
-This CLI support to create ACI using the following methods.
-
-* Ansible
-* Shell script
-* Extract dependencies from binary and shared object
-* Create minimum Python environment
-
-## 使い方 / Usage
+## 使い方
 
 manifestファイルに"-aci-packer-build-steps-"というキーを追加して，
 その中に実行したいコマンド等を順番に記述していきます．
@@ -364,4 +353,52 @@ Initializing machine ID from container UUID.
 [I 150322 04:11:19 web:1825] 200 GET / (::1) 1.05ms
 [W 150322 04:11:19 web:1825] 404 GET /favicon.ico (::1) 0.66ms
 [W 150322 04:11:19 web:1825] 404 GET /favicon.ico (::1) 0.62ms
+```
+
+### BusyBoxとBash
+
+```
+$ cat > bash.json <<EOF
+{
+  "name": "bash",
+  "app": {
+    "exec": [
+      "/bin/bash"
+    ],
+    "user": "root",
+    "group": "root"
+  },
+  "-aci-packer-build-steps-": [
+    {
+      "type": "copy_host_files",
+      "binaries": [
+        "/bin/bash",
+        "/bin/busybox"
+      ]
+    },
+    {
+      "type": "cmd",
+      "copy": false,
+      "path": "/bin/busybox",
+      "args": [
+        "--install",
+        "-s",
+        "/bin"
+      ]
+    }
+  ]
+}
+EOF
+$  sudo python ./aci-packer.py -C xz bash.json bash.aci
+$  ls -lh bash.aci
+-rw-r--r-- 1 root root 1.7M Mar 22 18:44 bash.aci
+$  sudo rkt run --interactive bash.aci
+/etc/localtime is not a symlink, not updating container timezone.
+bash-4.2# ls -l /lib64/
+total 2448
+-rwxr-xr-x    1 0        0           140624 Mar  5 14:28 ld-linux-x86-64.so.2
+-rwxr-xr-x    1 0        0          1705232 Mar  5 14:28 libc.so.6
+-rwxr-xr-x    1 0        0            14520 Mar  5 14:28 libdl.so.2
+-rwxr-xr-x    1 0        0           353952 Dec 17 15:31 libncurses.so.5
+-r-xr-xr-x    1 0        0           279888 Dec 17 15:31 libreadline.so.6
 ```
