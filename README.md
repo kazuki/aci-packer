@@ -249,3 +249,119 @@ Initializing machine ID from container UUID.
          Starting nginx...
 [  OK  ] Started nginx.
 ```
+
+### Web Server (tornado, python minimal)
+
+```
+$ wget https://raw.githubusercontent.com/tornadoweb/tornado/master/demos/helloworld/helloworld.py
+$ cat > tornado.json <<EOF
+{
+  "name": "tornado",
+  "app": {
+    "exec": [
+      "/usr/bin/python",
+      "/helloworld.py"
+    ],
+    "user": "root",
+    "group": "root",
+    "ports": [
+      {
+        "name": "http",
+        "port": 8888,
+        "protocol": "tcp"
+      }
+    ]
+  },
+  "-aci-packer-build-steps-": [
+    {
+      "type": "create_python_env"
+    },
+    {
+      "type": "cmd",
+      "copy": false,
+      "path": "/usr/bin/pip",
+      "args": [
+        "install",
+        "tornado"
+      ]
+    },
+    {
+      "type": "copy_host_files",
+      "files": [
+        ["helloworld.py", "/helloworld.py"]
+      ]
+    }
+  ]
+}
+EOF
+$ sudo python ./aci-packer.py -C xz tornado.json tornado.aci
+Collecting tornado
+  Downloading tornado-4.1.tar.gz (332kB)
+    100% |################################| 335kB 1.4MB/s
+Collecting certifi (from tornado)
+  Downloading certifi-14.05.14.tar.gz (168kB)
+    100% |################################| 172kB 1.8MB/s
+    /usr/lib64/python3.3/site-packages/setuptools/dist.py:283: UserWarning: The version specified requires normalization, consider using '14.5.14' instead of '14.05.14'.
+      self.metadata.version,
+Installing collected packages: certifi, tornado
+  Running setup.py install for certifi
+    /usr/lib64/python3.3/site-packages/setuptools/dist.py:283: UserWarning: The version specified requires normalization, consider using '14.5.14' instead of '14.05.14'.
+      self.metadata.version,
+  Running setup.py install for tornado
+    building 'tornado.speedups' extension
+    x86_64-pc-linux-gnu-gcc -pthread -fPIC -I/usr/include/python3.3 -c tornado/speedups.c -o build/temp.linux-x86_64-3.3/tornado/speedups.o
+    command 'x86_64-pc-linux-gnu-gcc' failed with exit status 1
+    /pip-build-r5r69e/tornado/setup.py:93: UserWarning:
+    ********************************************************************
+    WARNING: The tornado.speedups extension module could not
+    be compiled. No C extensions are essential for Tornado to run,
+    although they do result in significant speed improvements for
+    websockets.
+    The output above this warning shows how the compilation failed.
+    Here are some hints for popular operating systems:
+    If you are seeing this message on Linux you probably need to
+    install GCC and/or the Python development package for your
+    version of Python.
+    Debian and Ubuntu users should issue the following command:
+        $ sudo apt-get install build-essential python-dev
+    RedHat, CentOS, and Fedora users should issue the following command:
+        $ sudo yum install gcc python-devel
+    If you are seeing this message on OSX please read the documentation
+    here:
+    http://api.mongodb.org/python/current/installation.html#osx
+    ********************************************************************
+      "The output above "
+Successfully installed certifi-14.5.14 tornado-4.1
+$ ls -lh tornado.aci
+-rw-r--r-- 1 root   root    18M Mar 22 13:10 tornado.aci
+$  sudo rkt --debug run tornado.aci
+2015/03/22 13:11:11 Preparing stage1
+2015/03/22 13:11:11 Wrote filesystem to /var/lib/rkt/containers/prepare/b5440d86-109d-4699-b53c-e21a57c12e9a
+2015/03/22 13:11:11 Loading image sha512-a7e406332387ca6ec028e663da0fec16c3f791838064b4177245c4709204b27d
+2015/03/22 13:11:12 Writing container manifest
+2015/03/22 13:11:12 Pivoting to filesystem /var/lib/rkt/containers/run/b5440d86-109d-4699-b53c-e21a57c12e9a
+2015/03/22 13:11:12 Execing /init
+Spawning container rootfs on /var/lib/rkt/containers/run/b5440d86-109d-4699-b53c-e21a57c12e9a/stage1/rootfs.
+Press ^] three times within 1s to kill container.
+/etc/localtime is not a symlink, not updating container timezone.
+systemd 215 running in system mode. (-PAM -AUDIT -SELINUX +IMA -SYSVINIT +LIBCRYPTSETUP -GCRYPT -ACL -XZ +SECCOMP -APPARMOR)
+Detected virtualization 'systemd-nspawn'.
+Detected architecture 'x86-64'.
+
+Welcome to Linux!
+
+Initializing machine ID from container UUID.
+[  OK  ] Created slice -.slice.
+[  OK  ] Created slice system.slice.
+         Starting Graceful exit watcher...
+[  OK  ] Started Graceful exit watcher.
+[  OK  ] Created slice system-prepare\x2dapp.slice.
+         Starting Prepare minimum environment for chrooted applications...
+[  OK  ] Reached target Rocket apps target.
+[  OK  ] Started Prepare minimum environment for chrooted applications.
+         Starting tornado...
+[  OK  ] Started tornado.
+[I 150322 04:11:19 web:1825] 200 GET / (::1) 1.05ms
+[W 150322 04:11:19 web:1825] 404 GET /favicon.ico (::1) 0.66ms
+[W 150322 04:11:19 web:1825] 404 GET /favicon.ico (::1) 0.62ms
+```
