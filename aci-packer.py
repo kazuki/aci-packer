@@ -63,7 +63,8 @@ def build(json_path, aci_path, compression):
         'ansible': task_ansible,
         'cmd': task_cmd,
         'create_python_env': task_create_python_env,
-        'copy_host_files': task_copy_host_files
+        'copy_host_files': task_copy_host_files,
+        'setup_chroot': task_setup_chroot,
     }
 
     try:
@@ -296,6 +297,10 @@ def task_copy_host_files(workdir, rootfs, binaries=[], files=[], **kwargs):
             backup_files.append(_backup_files[i])
         _backup_files = backup_files
 
+def task_setup_chroot(workdir, rootfs, **kwargs):
+    del kwargs['type']
+    setup_chroot_env(rootfs, **kwargs)
+
 def fetch_url(url, path):
     if os.path.isfile(path):
         try:
@@ -351,8 +356,10 @@ def setup_chroot_env(rootfs,
                      mount_dev = True,
                      make_debian_policy_rc = False):
     if copy_resolvconf:
+        os.stat(rootfs)
+        os.stat(os.path.join(rootfs, 'etc'))
         resolvcnf = os.path.join(rootfs, 'etc/resolv.conf')
-        if os.path.exists(resolvcnf):
+        if os.path.exists(resolvcnf) or os.path.islink(resolvcnf):
             os.rename(resolvcnf, resolvcnf + '.bk')
             shutil.copy2('/etc/resolv.conf', resolvcnf)
             _backup_files.append((resolvcnf + '.bk', resolvcnf))
