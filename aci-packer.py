@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import argparse
 import datetime
 import email.utils
 import glob
@@ -25,7 +26,7 @@ def abort(msg):
     sys.stderr.write(msg + '\n')
     sys.exit(1)
 
-def build(json_path, aci_path):
+def build(json_path, aci_path, compression):
     manifest = {
         "acKind": "ImageManifest",
         "acVersion": "0.4.1",
@@ -68,7 +69,13 @@ def build(json_path, aci_path):
         cleanup_chroot_env()
         with open(manifest_path, 'w') as f:
             json.dump(manifest, f)
-        subprocess.call(['tar', '--numeric-owner', '-czf', aci_path, 'manifest', 'rootfs'], cwd=workdir)
+
+        if compression == 'xz':
+            compression = 'J'
+        else:
+            compression = 'z'
+        subprocess.call(['tar', '--numeric-owner', '-c{0}f'.format(compression),
+                         aci_path, 'manifest', 'rootfs'], cwd=workdir)
     finally:
         cleanup_chroot_env()
         shutil.rmtree(workdir)
@@ -406,15 +413,18 @@ def cleanup_chroot_env():
     del _backup_files[:]
 
 def main():
-    if len(sys.argv) != 3:
-        print('usage: {0} <json-path> <aci-path>'.format(sys.argv[0]))
-        sys.exit(0)
-
-    json_path = sys.argv[1]
-    aci_path = sys.argv[2]
-    if not os.path.isfile(json_path):
-        abort('{0} is not found\n'.format(json_path))
-    build(json_path, aci_path)
+    parser = argparse.ArgumentParser(description='App container image builder')
+    parser.add_argument('--compression', '-C', action='store', default='gzip',
+                        choices=('gzip', 'xz'),
+                        help='use compression algorithm (default: gzip)')
+    parser.add_argument('json_path', action='store', type=str,
+                        help='manifest(json) path')
+    parser.add_argument('aci_path', action='store', type=str,
+                        help='output aci path')
+    args = parser.parse_args()
+    if not os.path.isfile(args.json_path):
+        abort('{0} is not found\n'.format(args.json_path))
+    build(args.json_path, args.aci_path, args.compression)
 
 if __name__ == '__main__':
     main()
