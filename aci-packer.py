@@ -28,11 +28,11 @@ def abort(msg):
 
 def build(json_path, aci_path, compression):
     manifest = {
-        "acKind": "ImageManifest",
-        "acVersion": "0.4.1",
-        "labels": [
-            { "name": "arch", "value": "amd64" },
-            { "name": "os",   "value": "linux" }
+        'acKind': 'ImageManifest',
+        'acVersion': '0.4.1',
+        'labels': [
+            { 'name': 'arch', 'value': 'amd64' },
+            { 'name': 'os',   'value': 'linux' }
         ],
     }
     with open(json_path) as f:
@@ -41,6 +41,13 @@ def build(json_path, aci_path, compression):
         abort('"{0}" not found in json'.format(MAGIC_KEY))
     steps = user_manifest[MAGIC_KEY]
     del user_manifest[MAGIC_KEY]
+    if 'labels' in user_manifest:
+        labels = dict([(x['name'], x['value']) for x in manifest['labels']])
+        labels.update(dict([(x['name'], x['value'])
+                            for x in user_manifest['labels']]))
+        del user_manifest['labels']
+        manifest['labels'] = [{'name': name, 'value': value}
+                              for name, value in labels.items()]
     manifest.update(user_manifest)
 
     if not os.path.isabs(aci_path):
@@ -55,8 +62,8 @@ def build(json_path, aci_path, compression):
         'extract': task_extract,
         'ansible': task_ansible,
         'cmd': task_cmd,
-        "create_python_env": task_create_python_env,
-        "copy_host_files": task_copy_host_files
+        'create_python_env': task_create_python_env,
+        'copy_host_files': task_copy_host_files
     }
 
     try:
@@ -316,7 +323,7 @@ def fetch_url(url, path):
 def exec_ldd(path, return_abspath = False):
     libs = set()
     try:
-        result = subprocess.check_output(["ldd", path],
+        result = subprocess.check_output(['ldd', path],
                                          stderr=subprocess.STDOUT).splitlines()
     except:
         return libs
