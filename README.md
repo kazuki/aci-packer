@@ -1,4 +1,4 @@
-# aci-packer
+# acipacker
 
 [App Container Specification](https://github.com/appc/spec)に
 (たぶん)準拠したACIを作成するためのコマンドラインベースのツールです．
@@ -100,7 +100,7 @@ manifestファイルに"-aci-packer-build-steps-"というキーを追加して�
 
 ACIを作成する場合は，上記のようなmanifestを指定して以下のコマンドを実行します
 ```
-$ ./aci-packer.py test.json output.aci
+$ python ./acipacker.py test.json output.aci
 ```
 
 ## 実行例
@@ -158,7 +158,7 @@ $ cat > nginx.json <<EOF
   ]
 }
 EOF
-$ sudo python ./aci-packer.py -C xz nginx.json nginx.aci
+$ sudo python ./acipacker.py -C xz nginx.json nginx.aci
 1: step=image
 2: step=setup_chroot
 3: step=cmd
@@ -243,7 +243,7 @@ $ cat > bash.json <<EOF
   ]
 }
 EOF
-$  sudo python ./aci-packer.py -C xz bash.json bash.aci
+$  sudo python ./acipacker.py -C xz bash.json bash.aci
 $  ls -lh bash.aci
 -rw-r--r-- 1 root root 1.7M Mar 22 18:44 bash.aci
 $  sudo rkt run --interactive bash.aci
