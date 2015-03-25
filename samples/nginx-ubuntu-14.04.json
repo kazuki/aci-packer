@@ -1,0 +1,48 @@
+{
+  "name": "nginx",
+  "labels": [
+    { "name": "version", "value": "1.0.0" }
+  ],
+  "app": {
+    "exec": [
+      "/usr/sbin/nginx",
+      "-g",
+      "daemon off;"
+    ],
+    "user": "root",
+    "group": "root",
+    "ports": [
+      {
+        "name": "http",
+        "port": 80,
+        "protocol": "tcp"
+      }
+    ]
+  },
+  "-aci-packer-build-steps-": [
+    {
+      "step": "image",
+      "url": "http://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-root.tar.gz"
+    },
+    {
+      "step": "setup_chroot",
+      "make_debian_policy_rc": true
+    },
+    {
+      "step": "cmd",
+      "path": "/usr/bin/apt-get",
+      "args": [
+        "install",
+        "-y",
+        "nginx"
+      ]
+    },
+    {
+      "step": "cmd",
+      "path": "/usr/bin/apt-get",
+      "args": [
+        "clean"
+      ]
+    }
+  ]
+}
