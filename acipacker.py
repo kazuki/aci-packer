@@ -40,7 +40,8 @@ class Builder(object):
             ]
         }
 
-    def build_aci(self, json_path, aci_path, compression):
+    def build_aci(self, json_path, aci_path, compression, debug):
+        self.debug = debug
         if compression not in COMPRESSION_TYPE:
             raise ValueError('"{0}" is not supported compression type'
                              .format(compression))
@@ -78,9 +79,10 @@ class Builder(object):
             with open(os.path.join(self.workdir, 'manifest'), 'w') as f:
                 json.dump(manifest, f)
             print('compressing')
-            subprocess.call(['tar', '--numeric-owner', '-c{0}f'
-                             .format(COMPRESSION_TYPE[compression]),
-                             aci_path, 'manifest', 'rootfs'], cwd=self.workdir)
+            self._subprocess_call(['tar', '--numeric-owner', '-c{0}f'
+                                   .format(COMPRESSION_TYPE[compression]),
+                                   aci_path, 'manifest', 'rootfs'],
+                                  cwd=self.workdir)
             print('done')
         finally:
             self._cleanup()
@@ -95,7 +97,7 @@ class Builder(object):
         elif path:
             if not os.path.isfile(path):
                 raise FileNotFoundError('{0} is not found'.format(path))
-        if subprocess.call(['tar', 'xf', path, '-C', self.rootfs]) != 0:
+        if self._subprocess_call(['tar', 'xf', path, '-C', self.rootfs]) != 0:
             raise Exception('tar extraction error')
 
     def step_setup_chroot(self, copy_resolvconf=True,
@@ -124,11 +126,11 @@ class Builder(object):
                 cmd = ['mount', '--rbind', bindpoint, mountpoint]
             elif isproc:
                 cmd = ['mount', '-t', 'proc', 'proc', mountpoint]
-            if subprocess.call(cmd) != 0:
+            if self._subprocess_call(cmd) != 0:
                 raise Exception('mount failed: {0}'.format(cmd))
             self._add_mount_entry(mountpoint)
             if bindpoint:
-                subprocess.call(['mount', '--make-rslave', mountpoint])
+                self._subprocess_call(['mount', '--make-rslave', mountpoint])
 
         if copy_resolvconf:
             dst = os.path.join(self.rootfs, 'etc/resolv.conf')
@@ -158,16 +160,16 @@ class Builder(object):
             inventory_path = f.name
             f.write('[aci]\n{0}  ansible_connection=chroot\n'.format(self.rootfs))
         self._add_remove_entry(inventory_path)
-        if subprocess.call(['ansible-playbook', '-i', inventory_path, playbook]) != 0:
+        if self._subprocess_call(['ansible-playbook', '-i', inventory_path, playbook]) != 0:
             raise Exception('failed ansible execution')
 
     def step_cmd(self, path, args=[], **kwargs):
-        if subprocess.call(['chroot', self.rootfs, path] + args) != 0:
+        if self._subprocess_call(['chroot', self.rootfs, path] + args) != 0:
             raise Exception('failed cmd execution')
 
     def step_shell(self, cmd, **kwargs):
         env = {'ROOTFS': self.rootfs}
-        if subprocess.call(cmd, env=env, shell=True) != 0:
+        if self._subprocess_call(cmd, env=env, shell=True) != 0:
             raise Exception('failed cmd execution')
 
     def step_copy(self, binaries=[], find_executable=[], files=[], excludes=[], **kwargs):
@@ -376,11 +378,22 @@ class Builder(object):
                 self._unlink_if_exists(path)
                 shutil.copy2(os.path.join(dirpath, name), path)
 
+    def _subprocess_call(self, args, **kwargs):
+        if self.debug:
+            return subprocess.call(args, **kwargs)
+        try:
+            subprocess.check_output(args, stderr=subprocess.STDOUT, **kwargs)
+            return 0
+        except:
+            return 1
+
 def main():
     parser = argparse.ArgumentParser(description='App container image builder')
     parser.add_argument('--compression', '-C', action='store', default='gzip',
                         choices=('gzip', 'xz', 'none', 'bzip2'),
                         help='use compression algorithm (default: gzip)')
+    parser.add_argument('--debug', action='store_true',
+                        help='enable debug mode')
     parser.add_argument('json_path', action='store', type=str,
                         help='manifest(json) path')
     parser.add_argument('aci_path', action='store', type=str,
@@ -390,7 +403,8 @@ def main():
         raise FileNotFoundError('{0} is not found\n'.format(args.json_path))
 
     builder = Builder()
-    builder.build_aci(args.json_path, args.aci_path, args.compression)
+    builder.build_aci(args.json_path, args.aci_path,
+                      args.compression, args.debug)
 
 if __name__ == '__main__':
     main()
