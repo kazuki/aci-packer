@@ -267,7 +267,7 @@ class Builder(object):
             if n == 'linux-vdso.so.1':
                 continue
             if return_abspath:
-                if len(items) == 4 and items[1] == b'=>':
+                if len(items) == 4 and items[1] == b'=>' and items[2][0] == 0x2f:
                     libs.add(items[2].decode('ascii'))
                 elif len(items) == 2 and n[0] == '/':
                     libs.add(n)
