@@ -180,6 +180,13 @@ class Builder(object):
                 if path.startswith(prefix):
                     return True
             return False
+        def is_executable(path):
+            if '.so.' in path or path.endswith('.so'):
+                return True
+            stat = os.stat(path)
+            if (stat.st_mode & 0o111) != 0:
+                return True
+            return False
         libs = set(binaries)
         for path in binaries:
             libs |= self._ldd(path, return_abspath=True)
@@ -189,8 +196,7 @@ class Builder(object):
                     continue
                 for name in filenames:
                     path = os.path.join(dirpath, name)
-                    stat = os.stat(path)
-                    if (stat.st_mode & 0o111) != 0:
+                    if is_executable(path):
                         libs.add(path)
                         libs |= self._ldd(path, return_abspath=True)
         if len(binaries) < len(libs):
