@@ -258,17 +258,18 @@ class Builder(object):
         libs = set()
         try:
             result = subprocess.check_output(['ldd', path],
-                                             stderr=subprocess.STDOUT).splitlines()
+                                             stderr=subprocess.STDOUT)
+            result = result.decode('ascii').splitlines()
         except:
             return libs
         for x in result:
             items = x.split()
-            n = items[0].decode('ascii')
+            n = items[0]
             if n == 'linux-vdso.so.1':
                 continue
             if return_abspath:
-                if len(items) == 4 and items[1] == b'=>' and items[2][0] == 0x2f:
-                    libs.add(items[2].decode('ascii'))
+                if len(items) == 4 and items[1] == '=>' and items[2][0] == '/':
+                    libs.add(items[2])
                 elif len(items) == 2 and n[0] == '/':
                     libs.add(n)
             else:
