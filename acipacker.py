@@ -229,6 +229,14 @@ class Builder(object):
                 os.unlink(path)
             elif os.path.isdir(path):
                 shutil.rmtree(path)
+
+    def step_mkdir(self, dirs, **kwargs):
+        if isinstance(dirs, str):
+            dirs = [dirs]
+        for path in dirs:
+            path = os.path.abspath(self.rootfs + '/./' + path)
+            if not os.path.exists(path):
+                os.makedirs(path)
             
     def _fetch_url(self, url, path):
         if os.path.isfile(path):

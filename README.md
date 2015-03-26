@@ -93,6 +93,12 @@ manifestファイルに"-aci-packer-build-steps-"というキーを追加して�
       "files": [
         "/delete-file-path"
       ]
+    },
+    {
+      "step": "mkdir", # フォルダを作成します
+      "dirs": [
+        "/dir-path"
+      ]
     }
   ]
 }
