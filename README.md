@@ -99,6 +99,13 @@ manifestファイルに"-aci-packer-build-steps-"というキーを追加して�
       "dirs": [
         "/dir-path"
       ]
+    },
+    {
+      "step": "ld.so.cache", # /etc/ld.so.cacheをコンテナ内の環境で再構築します
+      "host_base": false,    # ホストのコンフィグをベースに再構築するかを設定します
+                             # ディストリビューションのrootfsイメージをベースにしていない限りは
+                             # 基本的にはtrueとします
+      "paths": []            # ld.so.confにパスを追加して再構築します
     }
   ]
 }

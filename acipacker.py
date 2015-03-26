@@ -1,5 +1,6 @@
 import argparse
 import email.utils
+import glob
 import os
 import os.path
 import json
@@ -63,15 +64,15 @@ class Builder(object):
         try:
             idx = 1
             for step in steps:
-                if 'step' not in step or step['step'] not in step_map:
+                func = step.get('step')
+                if func:
+                    func = func.replace('.', '')
+                if not func or func not in step_map:
                     raise ValueError('"step" key not found in build step '
                                      'or unknown step type')
-                if 'name' in step:
-                    name = step['name']
-                else:
-                    name = 'step={0}'.format(step['step'])
+                name = step.get('name', 'step={0}'.format(step['step']))
                 print('{0}: {1}'.format(idx, name))
-                step_map[step['step']](**step)
+                step_map[func](**step)
                 idx += 1
             print('cleanup')
             self._cleanup()
@@ -237,6 +238,57 @@ class Builder(object):
             path = os.path.abspath(self.rootfs + '/./' + path)
             if not os.path.exists(path):
                 os.makedirs(path)
+
+    def step_ldsocache(self, host_base=False, paths=[], **kwargs):
+        copy_ldconfig = False
+        mkdir_sbin = False
+        try:
+            chrooted_ldconfig = os.path.abspath(self.rootfs + '/sbin/ldconfig')
+            chrooted_ldsoconf = os.path.abspath(self.rootfs + '/etc/ld.so.conf')
+            chrooted_ldsoconf_bk = chrooted_ldsoconf + '.bk'
+            if not os.path.exists(os.path.dirname(chrooted_ldconfig)):
+                os.makedirs(os.path.dirname(chrooted_ldconfig))
+                mkdir_sbin = True
+            if not os.path.exists(chrooted_ldconfig):
+                shutil.copy2('/sbin/ldconfig', chrooted_ldconfig)
+                copy_ldconfig = True
+            if not os.path.exists(os.path.dirname(chrooted_ldsoconf)):
+                os.makedirs(os.path.dirname(chrooted_ldsoconf))
+            if host_base:
+                sys_paths = []
+                configs = ['/etc/ld.so.conf']
+                while len(configs) > 0:
+                    config_path = configs[0]
+                    configs = configs[1:]
+                    with open(config_path, 'r') as f:
+                        for line in f:
+                            line = line.strip()
+                            if len(line) == 0 or line[0] == '#':
+                                continue
+                            if line[0] == '/' and os.path.exists(line):
+                                sys_paths.append(line)
+                            if line.startswith('include '):
+                                line = os.path.join(
+                                    os.path.dirname(config_path), line[8:])
+                                configs += glob.glob(line)
+                paths = sys_paths + paths
+                if os.path.exists(chrooted_ldsoconf):
+                    os.rename(chrooted_ldsoconf, chrooted_ldsoconf_bk)
+                with open(chrooted_ldsoconf, 'w') as f:
+                    f.write('\n'.join(paths))
+            if self._subprocess_call(['chroot', self.rootfs,
+                                      '/sbin/ldconfig']) != 0:
+                raise Exception('ldconfig failed')
+        finally:
+            if copy_ldconfig:
+                os.unlink(chrooted_ldconfig)
+            if mkdir_sbin:
+                os.rmdir(os.path.dirname(chrooted_ldconfig))
+            if os.path.exists(chrooted_ldsoconf_bk):
+                os.unlink(chrooted_ldsoconf)
+                os.rename(chrooted_ldsoconf_bk, chrooted_ldsoconf)
+            elif host_base:
+                os.unlink(chrooted_ldsoconf)
             
     def _fetch_url(self, url, path):
         if os.path.isfile(path):
