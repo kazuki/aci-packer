@@ -1,0 +1,42 @@
+{
+  "name": "java",
+  "labels": [
+    { "name": "version", "value": "1.7.0" }
+  ],
+  "-aci-packer-build-steps-": [
+    {
+      "step": "symlink",
+      "links": [
+        ["lib64", "/lib"],
+        ["lib64", "/usr/lib"],
+        ["/usr/lib/icedtea7/bin/java", "/usr/bin/java"]
+      ]
+    },
+    {
+      "step": "mkdir",
+      "dirs": [
+        "/lib64",
+        "/usr/lib64"
+      ]
+    },
+    {
+      "step": "copy",
+      "find_executable": [
+        "/usr/lib/icedtea7"
+      ],
+      "files": [
+        ["/usr/lib/icedtea7", "/usr/lib/icedtea7"]
+      ]
+    },
+    {
+      "step": "ld.so.cache",
+      "host_base": true
+    },
+    {
+      "step": "delete",
+      "files": [
+        "/usr/lib64/icedtea7/man"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "java",
+  "labels": [
+    { "name": "version", "value": "1.7.0" }
+  ],
+  "-aci-packer-build-steps-": [
+    {
+      "step": "symlink",
+      "links": [
+        ["lib", "/lib64"],
+        ["/usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java", "/usr/bin/java"]
+      ]
+    },
+    {
+      "step": "copy",
+      "find_executable": [
+        "/usr/lib/jvm/java-7-openjdk-amd64"
+      ],
+      "files": [
+        ["/usr/lib/jvm/java-7-openjdk-amd64", "/usr/lib/jvm/java-7-openjdk-amd64"]
+      ]
+    },
+    {
+      "step": "ld.so.cache",
+      "ldconfig": "/sbin/ldconfig.real",
+      "host_base": true
+    },
+    {
+      "step": "delete",
+      "files": [
+        "/usr/lib/jvm/java-7-openjdk-amd64/jre/man",
+        "/usr/lib/jvm/java-7-openjdk-amd64/man"
+      ]
+    }
+  ]
+}
