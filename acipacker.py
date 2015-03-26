@@ -290,7 +290,7 @@ class Builder(object):
         targets = [
             'libnss_compat.so',
             'libnss_dns.so',
-            'libnss_file.so',
+            'libnss_files.so',
             'libresolv.so'
         ]
         def is_target(name):
