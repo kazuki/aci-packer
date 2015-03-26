@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import argparse
 import email.utils
 import glob
@@ -239,7 +240,7 @@ class Builder(object):
             if not os.path.exists(path):
                 os.makedirs(path)
 
-    def step_ldsocache(self, host_base=False, paths=[], **kwargs):
+    def step_ldsocache(self, ldconfig="/sbin/ldconfig", host_base=False, paths=[], **kwargs):
         copy_ldconfig = False
         mkdir_sbin = False
         try:
@@ -250,7 +251,7 @@ class Builder(object):
                 os.makedirs(os.path.dirname(chrooted_ldconfig))
                 mkdir_sbin = True
             if not os.path.exists(chrooted_ldconfig):
-                shutil.copy2('/sbin/ldconfig', chrooted_ldconfig)
+                shutil.copy2(ldconfig, chrooted_ldconfig)
                 copy_ldconfig = True
             if not os.path.exists(os.path.dirname(chrooted_ldsoconf)):
                 os.makedirs(os.path.dirname(chrooted_ldsoconf))
