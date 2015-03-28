@@ -66,8 +66,11 @@ manifestファイルに"-aci-packer-build-steps-"というキーを追加して�
     },
     {
       "step": "copy", # ホストのファイルをコピー
-      "binaries": [], # コピーするバイナリのリスト
-                      # lddを使って依存関係もコピーします
+      "binaries": [   # コピーするバイナリのリスト
+        "/bin/hoge",  # lddを使って依存関係もコピーします
+        ["/home/user/app/exe", # [src,dst]というリストを指定すると
+         "/usr/bin/exe"]       # 任意のコピー先にバイナリを配置できます
+      ],
       "find_executable": [], # 指定したパスに含まれるすべての実行可能ファイルを検索し
                              # "binaries"に指定した場合と同じ処理を行います
       "files": [      # ホストのファイル/ディレクトリをACIの指定パスにコピー

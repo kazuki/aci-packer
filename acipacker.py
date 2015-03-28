@@ -187,8 +187,13 @@ class Builder(object):
             if (stat.st_mode & 0o111) != 0:
                 return True
             return False
-        libs = set(binaries)
+        libs = set()
         for path in binaries:
+            if isinstance(path, list):
+                files.append(path)
+                path = path[0]
+            else:
+                libs.add(path)
             libs |= self._ldd(path, return_abspath=True)
         for path in find_executable:
             for dirpath, dirnames, filenames in os.walk(path):
