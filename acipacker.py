@@ -44,6 +44,7 @@ class Builder(object):
 
     def build_aci(self, json_path, aci_path, compression, debug):
         self.debug = debug
+        self.basedir = os.path.abspath(os.path.dirname(json_path))
         if compression not in COMPRESSION_TYPE:
             raise ValueError('"{0}" is not supported compression type'
                              .format(compression))
@@ -174,7 +175,7 @@ class Builder(object):
         if self._subprocess_call(cmd, env=env, shell=True) != 0:
             raise Exception('failed cmd execution')
 
-    def step_copy(self, binaries=[], find_executable=[], files=[], excludes=[], **kwargs):
+    def step_copy(self, binaries=[], find_executable=[], files=[], excludes=[], uid=None, gid=None, mode=None, **kwargs):
         def is_exclude(path):
             for prefix in excludes:
                 if path.startswith(prefix):
@@ -187,7 +188,13 @@ class Builder(object):
             if (stat.st_mode & 0o111) != 0:
                 return True
             return False
+        if uid or gid:
+            if not uid: uid = -1
+            if not gid: gid = -1
+        if mode:
+            mode = int(mode, 8)
         libs = set()
+        copy_file_len = len(files)
         for path in binaries:
             if isinstance(path, list):
                 files.append(path)
@@ -208,7 +215,10 @@ class Builder(object):
             libs |= set(self._get_glibc_dylibs())
         for path in libs:
             files.append([path, path])
+        idx = 0
         for src, dst in files:
+            if not os.path.isabs(src):
+                src = os.path.abspath(os.path.join(self.basedir, src))
             if is_exclude(src):
                 continue
             dst = os.path.abspath(self.rootfs + dst)
@@ -219,6 +229,12 @@ class Builder(object):
                 self._copytree_overwrite(src, dst, exclude_func=is_exclude)
             else:
                 shutil.copy2(src, dst)
+                if idx < copy_file_len:
+                    if uid and gid:
+                        os.chown(dst, uid, gid)
+                    if mode:
+                        os.chmod(dst, mode)
+            idx += 1
 
     def step_symlink(self, links=[], **kwargs):
         for target, linkname in links:
@@ -230,10 +246,16 @@ class Builder(object):
                 self._unlink_if_exists(linkname)
             os.symlink(target, linkname)
 
-    def step_write(self, path, contents, **kwargs):
+    def step_write(self, path, contents, uid=None, gid=None, mode=None, **kwargs):
         path = os.path.abspath(self.rootfs + '/./' + path)
         with open(path, 'w') as f:
             f.write(contents)
+        if uid or gid:
+            if not uid: uid = -1
+            if not gid: gid = -1
+            os.chown(path, uid, gid)
+        if mode:
+            os.chmod(path, int(mode, 8))
 
     def step_delete(self, files, **kwargs):
         for name in files:
@@ -243,13 +265,19 @@ class Builder(object):
             elif os.path.isdir(path):
                 shutil.rmtree(path)
 
-    def step_mkdir(self, dirs, **kwargs):
+    def step_mkdir(self, dirs, uid=None, gid=None, mode='777', **kwargs):
         if isinstance(dirs, str):
             dirs = [dirs]
+        if uid or gid:
+            if not uid: uid = -1
+            if not gid: gid = -1
+        mode = int(mode, 8)
         for path in dirs:
             path = os.path.abspath(self.rootfs + '/./' + path)
             if not os.path.exists(path):
-                os.makedirs(path)
+                os.makedirs(path, mode)
+                if uid and gid:
+                    os.chown(path, uid, gid)
 
     def step_ldsocache(self, ldconfig="/sbin/ldconfig", host_base=False, paths=[], **kwargs):
         copy_ldconfig = False
