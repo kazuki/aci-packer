@@ -1,0 +1,14 @@
+{
+  "name": "aci.oikw.org/aci-discovery",
+  "labels": [
+    { "name": "version", "value": "0.0.0" }
+  ],
+  "-aci-packer-build-steps-": [
+    {
+      "step": "copy",
+      "binaries": [
+        ["aci-discovery", "/bin/aci-discovery"]
+      ]
+    }
+  ]
+}

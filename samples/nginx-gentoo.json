@@ -1,0 +1,65 @@
+{
+  "name": "aci.oikw.org/nginx",
+  "labels": [
+    { "name": "version", "value": "1.7.11" }
+  ],
+  "app": {
+    "exec": [
+      "/usr/sbin/nginx"
+    ],
+    "user": "root",
+    "group": "root",
+    "ports": [
+      {
+        "name": "http",
+        "port": 80,
+        "protocol": "tcp"
+      }
+    ]
+  },
+  "-aci-packer-build-steps-": [
+    {
+      "step": "copy",
+      "binaries": [
+        "/usr/sbin/nginx"
+      ]
+    },
+    {
+      "step": "mkdir",
+      "dirs": [
+        "/run"
+      ]
+    },
+    {
+      "step": "mkdir",
+      "uid": 65534,
+      "gid": 65534,
+      "dirs": [
+        "/var/log/nginx",
+        "/var/lib/nginx/tmp",
+        "/etc/nginx",
+        "/var/www/localhost/htdocs"
+      ]
+    },
+    {
+      "step": "write",
+      "path": "/etc/nginx/nginx.conf",
+      "contents": "daemon off;\nevents {\nuse epoll;\n}\nhttp {\nserver {\nlisten *;root /var/www/localhost/htdocs;\n}\n}"
+    },
+    {
+      "step": "write",
+      "path": "/var/www/localhost/htdocs/index.html",
+      "contents": "<html><body>Hello World</body></html>"
+    },
+    {
+      "step": "write",
+      "path": "/etc/passwd",
+      "contents": "root:x:0:0:root:/:/bin/sh\nnginx:x:65534:65534:nginx:/:/bin/false\n"
+    },
+    {
+      "step": "write",
+      "path": "/etc/group",
+      "contents": "root:x:0:root\nnginx:x:65534:\n"
+    }
+  ]
+}

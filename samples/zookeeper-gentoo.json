@@ -1,0 +1,74 @@
+{
+  "name": "aci.oikw.org/zookeeper",
+  "labels": [
+    { "name": "version", "value": "3.4.6" }
+  ],
+  "app": {
+    "exec": [
+      "/opt/zookeeper-3.4.6/bin/zkServer.sh",
+      "start-foreground"
+    ],
+    "user": "root",
+    "group": "root",
+    "ports": [
+      {
+        "name": "rpc",
+        "port": 2181,
+        "protocol": "tcp"
+      }
+    ]
+  },
+  "dependencies": [
+    {
+      "app": "aci.oikw.org/java"
+    }
+  ],
+  "-aci-packer-build-steps-": [
+    {
+      "step": "mkdir",
+      "dirs": [
+        "/opt",
+        "/var/lib/zookeeper"
+      ]
+    },
+    {
+      "step": "copy",
+      "binaries": [
+        "/bin/busybox",
+        "/bin/bash",
+        "/usr/bin/env"
+      ]
+    },
+    {
+      "step": "cmd",
+      "path": "/bin/busybox",
+      "args": [
+        "--install",
+        "-s",
+        "/bin"
+      ]
+    },
+    {
+      "step": "setup_chroot"
+    },
+    {
+      "step": "shell",
+      "cmd": "wget -O - http://ftp.jaist.ac.jp/pub/apache/zookeeper/zookeeper-3.4.6/zookeeper-3.4.6.tar.gz | tar xz -C $ROOTFS/opt"
+    },
+    {
+      "step": "delete",
+      "files": [
+        "/opt/zookeeper-3.4.6/contrib",
+        "/opt/zookeeper-3.4.6/dist-maven",
+        "/opt/zookeeper-3.4.6/docs",
+        "/opt/zookeeper-3.4.6/recipes",
+        "/opt/zookeeper-3.4.6/src"
+      ]
+    },
+    {
+      "step": "write",
+      "path": "/opt/zookeeper-3.4.6/conf/zoo.cfg",
+      "contents": "tickTime=2000\ndataDir=/var/lib/zookeeper\nclientPort=2181"
+    }
+  ]
+}
