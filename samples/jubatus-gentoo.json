@@ -1,0 +1,77 @@
+{
+  "name": "aci.oikw.org/jubatus",
+  "labels": [
+    { "name": "version", "value": "0.7.1" }
+  ],
+  "app": {
+    "exec": [
+      "/usr/bin/jubavisor",
+      "--zookeeper",
+      "127.0.0.1:2181"
+    ],
+    "user": "root",
+    "group": "root"
+  },
+  "-aci-packer-build-steps-": [
+    {
+      "step": "symlink",
+      "links": [
+        ["lib64", "/lib"],
+        ["lib64", "/usr/lib"]
+      ]
+    },
+    {
+      "step": "mkdir",
+      "dirs": [
+        "/lib64",
+        "/usr/lib64"
+      ]
+    },
+    {
+      "step": "copy",
+      "binaries": [
+        "/usr/bin/jubaanomaly",
+        "/usr/bin/jubaanomaly_proxy",
+        "/usr/bin/jubabandit",
+        "/usr/bin/jubabandit_proxy",
+        "/usr/bin/jubaburst",
+        "/usr/bin/jubaburst_proxy",
+        "/usr/bin/jubaclassifier",
+        "/usr/bin/jubaclassifier_proxy",
+        "/usr/bin/jubaclustering",
+        "/usr/bin/jubaclustering_proxy",
+        "/usr/bin/jubaconfig",
+        "/usr/bin/jubaconv",
+        "/usr/bin/jubactl",
+        "/usr/bin/jubagraph",
+        "/usr/bin/jubagraph_proxy",
+        "/usr/bin/jubanearest_neighbor",
+        "/usr/bin/jubanearest_neighbor_proxy",
+        "/usr/bin/jubarecommender",
+        "/usr/bin/jubarecommender_proxy",
+        "/usr/bin/jubaregression",
+        "/usr/bin/jubaregression_proxy",
+        "/usr/bin/jubastat",
+        "/usr/bin/jubastat_proxy",
+        "/usr/bin/jubavisor"
+      ],
+      "find_executable": [
+        "/usr/lib/jubatus"
+      ],
+      "files": [
+        ["/usr/lib/jubatus", "/usr/lib/jubatus"],
+        ["/etc/ld.so.cache", "/etc/ld.so.cache"]
+      ]
+    },
+    {
+      "step": "write",
+      "path": "/etc/passwd",
+      "contents": "root:x:0:0:root:/:/bin/sh\n"
+    },
+    {
+      "step": "write",
+      "path": "/etc/group",
+      "contents": "root:x:0:root\n"
+    }
+  ]
+}
